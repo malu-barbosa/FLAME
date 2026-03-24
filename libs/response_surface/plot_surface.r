@@ -1,11 +1,11 @@
 library(RColorBrewer)
 library(raster)
 library(colorspace)
-source("D:/Doutorado/Future_projections_fire/response_surface/libs/cut_results.r")
-source("D:/Doutorado/Future_projections_fire/response_surface/libs/find_levels.r")
-source("D:/Doutorado/Future_projections_fire/response_surface/libs/legendColBar.r")
-source("D:/Doutorado/Future_projections_fire/response_surface/libs/mtext.units.r")
-source("D:/Doutorado/Future_projections_fire/response_surface/libs/time_series_from_nc.r")
+source("libs/response_surface/libs/cut_results.r")
+source("libs/response_surface/libs/find_levels.r")
+source("libs/response_surface/libs/legendColBar.r")
+source("libs/response_surface/libs/mtext.units.r")
+source("libs/response_surface/libs/time_series_from_nc.R")
 
 ############
 ## Set up ##
@@ -19,7 +19,10 @@ source("D:/Doutorado/Future_projections_fire/response_surface/libs/time_series_f
 
 #file = 'D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-response-maps/group_0-response_surface.csv'
 #file = 'D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-response-maps/group_1-response_surface.csv'
-file = "D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-response-zero/group_1-response_surface.csv"
+file = "D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/-response-zero/group_1-response_surface.csv"
+
+file = 'outputs/Pantanal_model5/figs/potential-response-maps//group_1-response_surface.csv'
+
 
 ## choose from https://r-graph-gallery.com/38-rcolorbrewers-palettes.html
 
@@ -27,15 +30,15 @@ file = "D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-
 #choose your color gradient
 
 #potential
-#palette_name = "RdBu"
+palette_name = "RdBu"
 
 #standard
-palette_name = "Reds"
+#palette_name = "Reds"
 
 #sensitivity
 #palette_name = "PuBuGn"
 
-reverse_palette = FALSE ## set to true if you need to flip the colours
+reverse_palette = TRUE ## set to true if you need to flip the colours
 reverse_surface = FALSE ## set to true if the surface is outputted the wrong way round (i.e potential)
 
 #######################################
@@ -43,8 +46,10 @@ reverse_surface = FALSE ## set to true if the surface is outputted the wrong way
 #######################################
 ## Read in csv file to plot surface
 dat = read.csv(file)
-x = dat[,1]; y = dat[,2] ; z = as.matrix(dat[,c(3, 5)])
-
+x = dat[,2]; y = dat[,1]; z = as.matrix(dat[,c(3, 5)])
+#x = x -273.15; y = y *60*60*24*30 
+#mask = x>28 & x<35 & y > 0 & y < 300
+#x = x[mask]; y = y[mask]; z = z[mask,]
 ## changing precipitation and temperature units
 #x = dat[,1] - 273.15; y = dat[,2] * 60 * 60 * 24 * 30 ; z = as.matrix(dat[,c(3, 5)])
 
@@ -54,12 +59,12 @@ x = dat[,1]; y = dat[,2] ; z = as.matrix(dat[,c(3, 5)])
 
 ## preparing time series from nc files
 
-time_series <- calculate_mean_climate(
-        dir_tasmax = "D:/Doutorado/Sanduiche/research/maxent-variables/variables_masked_na/fixed_gfed_reference/2002-2021/grassland.nc",
-        dir_precip = "D:/Doutorado/Sanduiche/research/maxent-variables/variables_masked_na/fixed_gfed_reference/2002-2021/wetland.nc",
-        dir_shapefile = "D:/Doutorado/Malhas/biomas/Pantanal.shp",
-        target_years = 2002:2020
-)
+#time_series <- calculate_mean_climate(
+#        dir_tasmax = "/data/users/douglas.kelley/MaxEnt/driving_Data/yrs2002_2021/grassland.nc",
+#        dir_precip = "/data/users/douglas.kelley/MaxEnt/driving_Data/yrs2002_2021/wetland.nc",
+#        dir_shapefile = "D:/Doutorado/Malhas/biomas/Pantanal.shp",
+#        target_years = 2002:2020
+#)
 
 #if your variable is monthly 
 #months = c("08", "09", "10"),
@@ -68,13 +73,13 @@ time_series <- calculate_mean_climate(
 #dir_precip = "D:/Doutorado/Sanduiche/research/maxent-variables/era5/precip.nc",
 
 
-ntime = dim(time_series)[1]
+#ntime = dim(time_series)[1]
 
 ## work out colour of each point
 levels = find_levels(z)
 
 #if you need to constrain to above zero values (standard response)
-levels = levels[levels > 0]
+#levels = levels[levels > 0]
 
 brewer_colors = brewer.pal(length(levels)+1, palette_name)
 if (reverse_palette) brewer_colors = rev(brewer_colors)
@@ -85,7 +90,7 @@ if (reverse_palette) brewer_colors = rev(brewer_colors)
 #setwd("D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/potential-response-maps/")
 #setwd("D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/sensitivity-response-maps/")
 #setwd("D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-response-maps/")
-setwd("D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-response-zero/")
+#setwd("D:/Doutorado/Coding-python/outputs/pantanal/sem-frag-2020/figs/standard-response-zero/")
 
 png("response_surface_group1_abovezero.png", height =6, width = 5, units = 'in', res = 300)  
 layout(cbind(1:2, 3), width = c(1, 0.2))  
@@ -125,18 +130,18 @@ for_Percentile <- function(z, name) {
                 points(x, y, col = cols, pch = 19, cex = cex)
         
         ## Add time series
-        lines(time_series[,2], time_series[,3], lty = 2)
-        text(time_series[1,2], time_series[1,3], time_series[1,1], adj = c(-0.1,-0.1))
-        text(time_series[ntime,2], time_series[ntime,3], time_series[ntime,1], 
-             adj = c(-0.1,-0.1))
+        #lines(time_series[,2], time_series[,3], lty = 2)
+        #text(time_series[1,2], time_series[1,3], time_series[1,1], adj = c(-0.1,-0.1))
+        #text(time_series[ntime,2], time_series[ntime,3], time_series[ntime,1], 
+        #     adj = c(-0.1,-0.1))
         
         ## Add time series trend
-        find_trend <- function(i)
-                predict(lm(time_series[,i] ~ time_series[,1]))[c(1, ntime)]
+        #find_trend <- function(i)
+        #        predict(lm(time_series[,i] ~ time_series[,1]))[c(1, ntime)]
         
-        x_trend = find_trend(2)
-        y_trend = find_trend(3)
-        arrows(x_trend[1], y_trend[1], x_trend[2], y_trend[2], lwd = 3)
+       # x_trend = find_trend(2)
+        #y_trend = find_trend(3)
+        #arrows(x_trend[1], y_trend[1], x_trend[2], y_trend[2], lwd = 3)
 }
 for_Percentile(z[,1], '10th percentile')
 for_Percentile(z[,2], '90th percentile')
